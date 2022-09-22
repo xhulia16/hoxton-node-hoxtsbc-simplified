@@ -21,7 +21,7 @@ function getToken(id: number) {
 async function getCurrentUser(token: string) {
     // @ts-ignore
     const { id } = jwt.verify(token, SECRET)
-    const user = await prisma.user.findUnique({ where: { id } })
+    const user = await prisma.user.findUnique({ where: { id }, include: { transactions: true } })
     return user
 }
 
@@ -37,13 +37,34 @@ app.get('/validate', async (req, res) => {
     catch (error) {
         // @ts-ignore
         res.status(400).send({ error: error.message })
-    }
 
+    }
+})
+
+app.get('/transactions', async (req, res) => {
+    const transactions = await prisma.transaction.findMany({ include: { user: true } })
+    res.send(transactions)
 })
 
 app.get('/users', async (req, res) => {
     const users = await prisma.user.findMany()
     res.send(users)
+})
+
+app.get('/users/:id', async (req, res) => {
+    try {
+        const user = await prisma.user.findUnique({ where: { id: Number(req.params.id) }, include: { transactions: true } })
+        if (user) {
+            res.send(user)
+        }
+        else {
+            res.status(404).send({ error: "User not found!" })
+        }
+    }
+    catch (error) {
+        // @ts-ignore
+        res.status(400).send({ error: error.message })
+    }
 })
 
 app.post('/sign-up', async (req, res) => {
