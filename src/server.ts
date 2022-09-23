@@ -30,7 +30,7 @@ app.get('/validate', async (req, res) => {
         if (req.headers.authorization) {
             const user = await getCurrentUser(req.headers.authorization)
             // @ts-ignore
-            res.send({ user, token: getToken(user.id) })
+            res.send({ user, token: getToken(user.id)})
         }
     }
 
@@ -78,8 +78,9 @@ app.post('/sign-up', async (req, res) => {
                 data: {
                     email: req.body.email,
                     password: bcrypt.hashSync(req.body.password)
-                }
-            })
+                },
+                include: {transactions:true}
+            }, )
             res.send({ user: user, token: getToken(user.id) })
         }
     }
@@ -94,7 +95,7 @@ app.post('/sign-up', async (req, res) => {
 
 app.post('/log-in', async (req, res) => {
     try {
-        const user = await prisma.user.findUnique({ where: { email: req.body.email } })
+        const user = await prisma.user.findUnique({ where: { email: req.body.email }, include: {transactions:true} })
 
         if (user && bcrypt.compareSync(req.body.password, user.password)) {
             res.send({ user: user, token: getToken(user.id) })
